@@ -11,7 +11,7 @@ cd protobuf-${version}
 
 # install
 xattr -c ./bin/protoc
-cp -r ./bin/protoc $(GOPATH)/bin
+cp -r ./bin/protoc $GOPATH/bin
 cd ../
 rm -rf protobuf-${version}/
 
