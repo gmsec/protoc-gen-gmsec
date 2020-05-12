@@ -22,22 +22,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
 	"protoc-gen-gmsec/plugin/gmsec"
 	"strings"
 
-	"github.com/xxjwxc/public/tools"
 	gengo "google.golang.org/protobuf/cmd/protoc-gen-go/internal_gengo"
 
 	"google.golang.org/protobuf/compiler/protogen"
 )
-
-type GenInfo struct {
-	Plugins      string
-	ImportPrefix string
-	Args         []string
-	ModelPath    string
-}
 
 func main() {
 	var (
@@ -45,9 +36,6 @@ func main() {
 		plugins      = flags.String("plugins", "", "list of plugins to enable (supported values: grpc)")
 		importPrefix = flags.String("import_prefix", "", "prefix to prepend to import paths")
 	)
-
-	// 获取命令行参数
-	var info GenInfo
 
 	importRewriteFunc := func(importPath protogen.GoImportPath) protogen.GoImportPath {
 		switch importPath {
@@ -57,7 +45,6 @@ func main() {
 		if *importPrefix != "" {
 			return protogen.GoImportPath(*importPrefix) + importPath
 		}
-		tools.SaveToFile("./out/importPath.json", []string{importPath.String()}, true)
 		return importPath
 	}
 
@@ -65,13 +52,6 @@ func main() {
 		ParamFunc:         flags.Set,
 		ImportRewriteFunc: importRewriteFunc,
 	}.Run(func(gen *protogen.Plugin) error {
-		info.Plugins = *plugins
-		info.ImportPrefix = *importPrefix
-		info.Args = os.Args
-		info.ModelPath = tools.GetModelPath()
-		tools.SaveToFile("./out/info.json", []string{tools.JSONDecode(info)}, true)
-		tools.SaveToFile("./out/gen.json", []string{tools.JSONDecode(*gen)}, true)
-
 		grpc := false
 		for _, plugin := range strings.Split(*plugins, ",") {
 			switch plugin {
@@ -83,7 +63,6 @@ func main() {
 			}
 		}
 		for _, f := range gen.Files {
-			tools.SaveToFile("./out/ff.json", []string{tools.JSONDecode(f)}, true)
 			if !f.Generate {
 				continue
 			}
