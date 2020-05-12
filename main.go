@@ -22,8 +22,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"protoc-gen-gmsec/plugin/gmsec"
 	"strings"
+
+	"github.com/gmsec/protoc-gen-gmsec/plugin/gmsec"
 
 	gengo "google.golang.org/protobuf/cmd/protoc-gen-go/internal_gengo"
 

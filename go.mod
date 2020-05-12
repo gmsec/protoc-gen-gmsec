@@ -1,4 +1,4 @@
-module protoc-gen-gmsec
+module github.com/gmsec/protoc-gen-gmsec
 
 go 1.14
 
