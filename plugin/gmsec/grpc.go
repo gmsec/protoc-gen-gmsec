@@ -257,10 +257,10 @@ func genClientMethod(gen *protogen.Plugin, file *protogen.File, g *protogen.Gene
 	g.P("func (c *", unexport(service.GoName), "Client) ", clientSignature(g, method), "{")
 	if !method.Desc.IsStreamingServer() && !method.Desc.IsStreamingClient() {
 		g.P(`	conn, err := c.cc.Next()
-		defer conn.Close()
 		if err != nil {
 			return nil, err
-		}`) // add by xxj
+		}
+		defer conn.Close()`) // add by xxj
 		g.P("out := new(", method.Output.GoIdent, ")")
 		g.P(`err = conn.Invoke(ctx, "`, sname, `", in, out, opts...)`) // change by xxj
 		g.P("if err != nil { return nil, err }")
