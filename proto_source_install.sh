@@ -23,7 +23,7 @@ rm -rf protobuf-${version}/
 # install go-grpc
 # go get -u google.golang.org/grpc
 # go get -u github.com/golang/protobuf/protoc-gen-go
-go get -u github.com/gmsec/protoc-gen-gmsec
+go install github.com/gmsec/protoc-gen-gmsec@master
 
 echo "SUCCESS"
 #end

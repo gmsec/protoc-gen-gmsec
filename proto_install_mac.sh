@@ -10,15 +10,17 @@ tar -xvf protobuf.tar.gz -C ./protobuf-${version}
 cd protobuf-${version}
 
 # install
-xattr -c ./bin/protoc
+xattr -c ./bin/protoc # mac 
 cp -r ./bin/protoc $GOPATH/bin
 cd ../
 rm -rf protobuf-${version}/
+rm -rf ./protobuf.tar.gz
 
 # install go-grpc
 go get -u google.golang.org/grpc
-# go get -u github.com/golang/protobuf/protoc-gen-go
 go install github.com/gmsec/protoc-gen-gmsec@master
+
+chmod +x $GOPATH/bin/protoc
 
 echo "SUCCESS"
 #end
