@@ -271,7 +271,12 @@ func genClientMethod(gen *protogen.Plugin, file *protogen.File, g *protogen.Gene
 	}
 	streamType := unexport(service.GoName) + method.GoName + "Client"
 	serviceDescVar := "_" + service.GoName + "_serviceDesc"
-	g.P("stream, err := c.cc.NewStream(ctx, &", serviceDescVar, ".Streams[", index, `], "`, sname, `", opts...)`)
+	g.P(`	conn, err := c.cc.Next()
+		if err != nil {
+			return nil, err
+		}
+		defer conn.Close()`) // add by lcx
+	g.P("stream, err := conn.NewStream(ctx, &", serviceDescVar, ".Streams[", index, `], "`, sname, `", opts...)`) // change by lcx
 	g.P("if err != nil { return nil, err }")
 	g.P("x := &", streamType, "{stream}")
 	if !method.Desc.IsStreamingClient() {
