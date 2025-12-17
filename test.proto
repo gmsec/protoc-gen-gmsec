@@ -3,9 +3,18 @@ syntax="proto3";
 // 测试proto文件
 package test;
 service TService { 
+  // Tfunc 测试函数
   rpc Tfunc (User) returns (User) {}
+  // 测试函数2
+  rpc Tfunc2 (User) returns (User) {}
 }
 
+service TService2 { 
+  // Tfunc 测试函数
+  rpc Tfunc (User) returns (User) {}
+  // 测试函数2
+  rpc Tfunc2 (User) returns (User) {}
+}
 // 用户信息
 message User {
   // 用户ID
