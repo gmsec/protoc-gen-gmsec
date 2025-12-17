@@ -1,0 +1,21 @@
+syntax="proto3";
+
+// 测试proto文件
+package test;
+service TService { 
+  rpc Tfunc (User) returns (User) {}
+}
+
+// 用户信息
+message User {
+  // 用户ID
+  string user_id = 1;
+  // 用户名
+  string username = 2;
+  // 用户年龄
+  int32 age = 3;
+  // 用户邮箱
+  string email = 4;
+}
+
+

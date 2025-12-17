@@ -1,0 +1,93 @@
+方式 2 - 把本地函数转为 tool
+在开发过程中，我们经常需要把一个本地函数封装成 Eino 的 tool，比如我们代码中本身已经有了一个 AddUser 的方法，但为了让大模型可以自主决策如何调用这个方法，我们要把这个方法变成一个 tool 并 bind 到大模型上。
+
+Eino 中提供了 NewTool 的方法来把一个函数转成 tool，同时，针对为参数约束通过结构体的 tag 来表示的场景提供了 InferTool 的方法，让构建的过程更加简单。
+
+下方方法的示例可以参考 cloudwego/eino/components/tool/utils/invokable_func_test.go 和 cloudwego/eino/components/tool/utils/streamable_func_test.go 中的单元测试。此处仅以 InvokableTool 为例，StreamableTool 也有对应的构建方法。
+
+使用 NewTool 方法
+当一个函数满足下面这种函数签名时，就可以用 NewTool 把其变成一个 InvokableTool ：
+
+type InvokeFunc[T, D any] func(ctx context.Context, input T) (output D, err error)
+NewTool 的方法如下：
+
+// 代码见: github.com/cloudwego/eino/components/tool/utils/invokable_func.go
+func NewTool[T, D any](desc *schema.ToolInfo, i InvokeFunc[T, D], opts ...Option) tool.InvokableTool
+同理 NewStreamTool 可创建 StreamableTool
+
+以 AddUser 为例，就可以用如下的方式构建：
+
+import (
+    "github.com/cloudwego/eino/components/tool"
+    "github.com/cloudwego/eino/components/tool/utils"
+    "github.com/cloudwego/eino/schema"
+)
+
+type User struct {
+    Name   string `json:"name"`
+    Age    int    `json:"age"`
+    Gender string `json:"gender"`
+}
+
+type Result struct {
+    Msg string `json:"msg"`
+}
+
+func AddUser(ctx context.Context, user *User) (*Result, error) {
+    // some logic
+}
+
+func createTool() tool.InvokableTool {
+    addUserTool := utils.NewTool(&schema.ToolInfo{
+        Name: "add_user",
+        Desc: "add user",
+        ParamsOneOf: schema.NewParamsOneOfByParams(
+            map[string]*schema.ParameterInfo{
+                "name": &schema.ParameterInfo{
+                    Type: schema.String,
+                    Required: true,
+                },
+                "age": &schema.ParameterInfo{
+                    Type: schema.Integer,
+                },
+                "gender": &schema.ParameterInfo{
+                    Type: schema.String,    
+                    Enum: []string{"male", "female"},
+                },
+            },
+        ),
+    }, AddUser)
+    
+    return addUserTool
+}
+使用 InferTool 方法
+从 NewTool 中可以看出，构建一个 tool 的过程需要分别传入 ToolInfo 和 InvokeFunc ，其中，ToolInfo 中包含 ParamsOneOf 的部分，这代表着函数的入参约束，同时，InvokeFunc 的函数签名中也有 input 的参数，这就意味着： ParamsOneOf 的部分和 InvokeFunc 的 input 参数需要保持一致。
+当一个函数完全由开发者自行实现的时候，就需要开发者手动维护 input 参数和 ParamsOneOf 以保持一致。更优雅的解决方法是 “参数约束直接维护在 input 参数类型定义中”，可参考上方 GoStruct2ParamsOneOf 的介绍。
+当参数约束信息包含在 input 参数类型定义中时，就可以使用 InferTool 来实现，函数签名如下：
+
+func InferTool[T, D any](toolName, toolDesc string, i InvokeFunc[T, D], opts ...Option) (tool.InvokableTool, error)
+以 AddUser 为例:
+
+import (
+    "github.com/cloudwego/eino/components/tool"
+    "github.com/cloudwego/eino/components/tool/utils"
+    "github.com/cloudwego/eino/schema"
+)
+
+type User struct {
+    Name   string `json:"name" jsonschema:"required,description=the name of the user"`
+    Age    int    `json:"age" jsonschema:"description=the age of the user"`
+    Gender string `json:"gender" jsonschema:"enum=male,enum=female"`
+}
+
+type Result struct {
+    Msg string `json:"msg"`
+}
+
+func AddUser(ctx context.Context, user *User) (*Result, error) {
+    // some logic
+}
+
+func createTool() (tool.InvokableTool, error) {
+    return utils.InferTool("add_user", "add user", AddUser)
+}

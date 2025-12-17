@@ -26,3 +26,5 @@ make source_install
 protoc --proto_path="./apidoc/proto/hello/" --gmsec_out=plugins=gmsec:./rpc/ hello.proto
 ```
 
+# 测试
+protoc --proto_path=./ --plugin=protoc-gen-gmsec=./protoc-gen-gmsec.exe --gmsec_out=plugins=gmsec:./ test.proto

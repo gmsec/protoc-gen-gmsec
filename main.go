@@ -5,17 +5,21 @@
 // protoc-gen-go is a plugin for the Google protocol buffer compiler to generate
 // Go code. Install it by building this program and making it accessible within
 // your PATH with the name:
+//
 //	protoc-gen-go
 //
 // The 'go' suffix becomes part of the argument for the protocol compiler,
 // such that it can be invoked as:
+//
 //	protoc --go_out=paths=source_relative:. path/to/file.proto
 //
 // This generates Go bindings for the protocol buffer defined by file.proto.
 // With that input, the output will be written to:
+//
 //	path/to/file.pb.go
 //
 // See the README and documentation for protocol buffers to learn more:
+//
 //	https://developers.google.com/protocol-buffers/
 package main
 
@@ -24,9 +28,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gmsec/protoc-gen-gmsec/plugin"
 	"github.com/gmsec/protoc-gen-gmsec/plugin/gmsec"
-
-	gengo "google.golang.org/protobuf/cmd/protoc-gen-go/internal_gengo"
 
 	"google.golang.org/protobuf/compiler/protogen"
 )
@@ -67,10 +70,13 @@ func main() {
 			if !f.Generate {
 				continue
 			}
-			gengo.GenerateFile(gen, f)
+			// 使用自定义的GenerateFile函数，保留gengo.GenerateFile调用并生成jsonschema_description标签
+			if err := plugin.GenerateFile(gen, f); err != nil {
+				return err
+			}
 			if grpc {
-				gmsec.GenerateFile(gen, f)
-				// gengogrpc.GenerateFileContent(gen, f, g)
+				gmsec.GenerateGmsecFile(gen, f)
+				// gengogrpc.GenerateFileContent(gen, f, g)han
 			}
 		}
 		return nil

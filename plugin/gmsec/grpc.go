@@ -27,7 +27,7 @@ const (
 )
 
 // GenerateFile generates a _grpc.pb.go file containing gRPC service definitions.
-func GenerateFile(gen *protogen.Plugin, file *protogen.File) *protogen.GeneratedFile {
+func GenerateGmsecFile(gen *protogen.Plugin, file *protogen.File) *protogen.GeneratedFile {
 	if len(file.Services) == 0 {
 		return nil
 	}
