@@ -491,7 +491,12 @@ func genMessageField(g *protogen.GeneratedFile, f *fileInfo, m *messageInfo, fie
 		{"json", fieldJSONTagValue(field)},
 	}
 	// 添加jsonschema_description标签，值为字段的注释
-	if comment := strings.TrimSpace(string(field.Comments.Leading)); comment != "" {
+	comment := strings.TrimSpace(string(field.Comments.Leading))
+	// 如果没有Leading注释，尝试使用Trailing注释
+	if comment == "" {
+		comment = strings.TrimSpace(string(field.Comments.Trailing))
+	}
+	if comment != "" {
 		// 移除注释前的//
 		comment = strings.TrimSpace(strings.TrimPrefix(comment, "//"))
 		tags = append(tags, structTags{

@@ -97,6 +97,19 @@ func opaqueGenMessageField(g *protogen.GeneratedFile, f *fileInfo, message *mess
 	if !message.isOpaque() {
 		tags = append(tags, structTags{{"json", jsonTagValue}}...)
 	}
+	// 添加jsonschema_description标签，值为字段的注释
+	comment := strings.TrimSpace(string(field.Comments.Leading))
+	// 如果没有Leading注释，尝试使用Trailing注释
+	if comment == "" {
+		comment = strings.TrimSpace(string(field.Comments.Trailing))
+	}
+	if comment != "" {
+		// 移除注释前的//
+		comment = strings.TrimSpace(strings.TrimPrefix(comment, "//"))
+		tags = append(tags, structTags{
+			{"jsonschema_description", comment},
+		}...)
+	}
 	if field.Desc.IsMap() {
 		keyTagValue := fieldProtobufTagValue(field.Message.Fields[0])
 		valTagValue := fieldProtobufTagValue(field.Message.Fields[1])
