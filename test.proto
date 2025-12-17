@@ -2,6 +2,7 @@ syntax="proto3";
 
 // 测试proto文件
 package test;
+option go_package = ".;test";
 service TService { 
   // Tfunc 测试函数
   rpc Tfunc (User) returns (User) {}
