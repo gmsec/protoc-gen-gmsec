@@ -2,7 +2,7 @@ syntax="proto3";
 
 // 测试proto文件
 package test;
-option go_package = ".;test";
+option go_package = "github.com/gmsec/protoc-gen-gmsec/example;example";
 service service { 
   // Tfunc 测试函数
   rpc Tfunc (User) returns (User) {}

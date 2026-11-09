@@ -17,6 +17,30 @@ func GenerateFile(gen *protogen.Plugin, file *protogen.File) error {
 	return nil
 }
 
+// commentDesc 从方法注释里提取一句话描述。
+// 注意:protoc 给的 Leading 注释是**整段**(可能多行),历史实现直接拼进 g.P,
+// 多行注释会生成 `// a\n// b` 这种把常量体拆开的非法 Go 代码,所以这里取首行。
+func commentDesc(comment protogen.Comments, goName string) (string, bool) {
+	for _, line := range strings.Split(string(comment), "\n") {
+		line = strings.TrimSpace(line)
+		line = strings.TrimSpace(strings.TrimPrefix(line, "//"))
+		if line == "" || !strings.HasPrefix(line, goName) {
+			continue
+		}
+		// 兼容 `Tfunc 描述` 与 `Tfunc:描述` 两种写法
+		desc := strings.TrimSpace(strings.TrimPrefix(line, goName))
+		desc = strings.TrimSpace(strings.TrimPrefix(desc, ":"))
+		desc = strings.TrimSpace(strings.TrimPrefix(desc, "："))
+		if desc == "" {
+			continue
+		}
+		// 常量值走 strconv.Quote,但注释行里的换行/制表符会把生成代码拆坏,统一压成空格
+		desc = strings.Join(strings.Fields(desc), " ")
+		return desc, true
+	}
+	return "", false
+}
+
 // generateConstantFile generates a constants file containing tool descriptions from service method comments
 func generateConstantFile(gen *protogen.Plugin, file *protogen.File) {
 	// 检查是否有service
@@ -33,22 +57,15 @@ func generateConstantFile(gen *protogen.Plugin, file *protogen.File) {
 
 	for _, service := range file.Services {
 		for _, method := range service.Methods {
-			comment := strings.TrimSpace(string(method.Comments.Leading))
-			if comment == "" {
+			desc, ok := commentDesc(method.Comments.Leading, method.GoName)
+			if !ok {
 				continue
 			}
-			// 移除注释前缀//
-			comment = strings.TrimSpace(strings.TrimPrefix(comment, "//"))
-			// 检查注释格式：是否以方法名开头
-			if strings.HasPrefix(comment, method.GoName+" ") {
-				// 提取描述部分
-				desc := strings.TrimSpace(strings.TrimPrefix(comment, method.GoName+" "))
-				constantEntries = append(constantEntries, struct {
-					serviceName string
-					methodName  string
-					desc        string
-				}{serviceName: service.GoName, methodName: method.GoName, desc: desc})
-			}
+			constantEntries = append(constantEntries, struct {
+				serviceName string
+				methodName  string
+				desc        string
+			}{serviceName: service.GoName, methodName: method.GoName, desc: desc})
 		}
 	}
 
@@ -67,10 +84,16 @@ func generateConstantFile(gen *protogen.Plugin, file *protogen.File) {
 	g.P("// Tool descriptions from proto comments")
 	g.P("const (")
 
+	// 同名常量重复声明会直接编译失败(不同 service 重名/方法重载),这里去重
+	seen := make(map[string]struct{}, len(constantEntries))
 	for _, entry := range constantEntries {
-		g.P("\t// ", entry.desc)
 		// 生成常量名：ServiceName_MethodName_ToolDesc，使用下划线区分
 		constantName := entry.serviceName + "_" + entry.methodName + "_ToolDesc"
+		if _, ok := seen[constantName]; ok {
+			continue
+		}
+		seen[constantName] = struct{}{}
+		g.P("\t// ", entry.desc)
 		g.P("\t", constantName, " = ", strconv.Quote(entry.desc))
 	}
 

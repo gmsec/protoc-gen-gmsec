@@ -227,7 +227,7 @@ func genService(gen *protogen.Plugin, file *protogen.File, g *protogen.Generated
 		g.P("},")
 	}
 	g.P("},")
-	g.P("Metadata: \"", file.Desc.Path(), "\",")
+	g.P("Metadata: ", strconv.Quote(file.Desc.Path()), ",") // 路径可能含引号/反斜杠,必须转义
 	g.P("}")
 	g.P()
 }
@@ -363,7 +363,9 @@ func genServerMethod(gen *protogen.Plugin, file *protogen.File, g *protogen.Gene
 		g.P("if interceptor == nil { return srv.(", service.GoName, "Server).", method.GoName, "(ctx, in) }")
 		g.P("info := &", grpcPackage.Ident("UnaryServerInfo"), "{")
 		g.P("Server: srv,")
-		g.P("FullMethod: ", strconv.Quote(fmt.Sprintf("/%s/%s", service.Desc.FullName(), method.GoName)), ",")
+		// FullMethod 必须用 proto 里的方法名(Desc.Name),
+		// 用 GoName 时 app_user_list 这类蛇形命名会与实际路由不一致,拦截器拿到的 FullMethod 是错的
+		g.P("FullMethod: ", strconv.Quote(fmt.Sprintf("/%s/%s", service.Desc.FullName(), method.Desc.Name())), ",")
 		g.P("}")
 		g.P("handler := func(ctx ", contextPackage.Ident("Context"), ", req interface{}) (interface{}, error) {")
 		g.P("return srv.(", service.GoName, "Server).", method.GoName, "(ctx, req.(*", method.Input.GoIdent, "))")
