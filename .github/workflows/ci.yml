@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  build:
+    name: build / vet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          check-latest: true
+
+      # 这个仓库依赖 go.mod 里的本地 replace:
+      #   replace google.golang.org/protobuf => ./protobuf@v1.36.11
+      # 所以必须从源码构建,`go install ...@latest` 会拉官方 protobuf,
+      # 生成结果会丢掉 jsonschema_description 标签。
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Example compiles
+        run: go build ./example/...

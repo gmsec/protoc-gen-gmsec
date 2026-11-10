@@ -1,0 +1,10 @@
+# 编译产物
+/protoc-gen-gmsec
+/protoc-gen-gmsec.exe
+*.exe
+*.test
+
+# 本地调试/临时文件
+/tmp/
+*.log
+*.out
